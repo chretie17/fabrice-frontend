@@ -71,14 +71,14 @@ const Dashboard = () => {
         { name: 'Rejected Posts', count: dashboardData.postStatus.find((p) => p.status === 'Rejected')?.post_count || 0 },
     ];
 
-    const topEngagementChartData = dashboardData.topEngagement.map((tenant) => ({
-        name: tenant.tenant_name,
-        engagement: tenant.post_count + tenant.feedback_count + tenant.comment_count,
+    const topEngagementChartData = dashboardData.topEngagement.map((student) => ({
+        name: student.student_name,
+        engagement: student.post_count + student.feedback_count + student.comment_count,
     }));
 
     const totalPosts = dashboardData.postStatus.reduce((acc, post) => acc + post.post_count, 0);
     const totalComments = dashboardData.commentCount[0]?.comment_count || 0;
-    const totalFeedback = dashboardData.tenantEngagement.reduce((acc, tenant) => acc + tenant.feedback_count, 0);
+    const totalFeedback = dashboardData.studentEngagement.reduce((acc, student) => acc + student.feedback_count, 0);
 
     return (
         <div className="bg-gradient-to-br from-gray-50 to-gray-100">
@@ -141,7 +141,7 @@ const Dashboard = () => {
                             link: '/admin/feedbacks',
                         },
                         {
-                            title: 'Tenant Engagement',
+                            title: 'student Engagement',
                             value: dashboardData.topEngagement.length,
                             icon: <BarChart2 className="text-[#123679]" />,
                             bgColor: 'bg-gradient-to-br from-[#123679]/10 to-[#123679]/5',
@@ -199,12 +199,12 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                     </div>
 
-                    {/* Tenant Engagement Chart */}
+                    {/* student Engagement Chart */}
                     <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
                         <h3 className="text-xl font-semibold text-[#123679] mb-6 flex items-center">
                             <BarChart2 className="mr-2 text-[#123679]" />
                             <span className="bg-gradient-to-r from-[#123679] to-[#2563eb] bg-clip-text text-transparent">
-                                Top Tenant Engagement
+                                Top student Engagement
                             </span>
                         </h3>
                         <ResponsiveContainer width="100%" height={300}>

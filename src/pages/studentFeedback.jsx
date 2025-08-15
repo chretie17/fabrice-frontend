@@ -49,13 +49,13 @@ const EmptyState = ({ onNewFeedback }) => (
       Welcome to Our Feedback Portal
     </h3>
     <p className="mt-4 text-lg text-gray-600 text-center max-w-md">
-      No services have been requested yet. Once you receive a service, you can share your valuable feedback here.
+      No courses have been requested yet. Once you receive a course, you can share your valuable feedback here.
     </p>
     <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl">
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl text-center">
         <ThumbsUp className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-        <h4 className="font-semibold text-blue-900">Rate Services</h4>
-        <p className="text-sm text-blue-700 mt-2">Share your experience with our services</p>
+        <h4 className="font-semibold text-blue-900">Rate courses</h4>
+        <p className="text-sm text-blue-700 mt-2">Share your experience with our courses</p>
       </div>
       <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl text-center">
         <MessageCircle className="w-8 h-8 text-purple-600 mx-auto mb-3" />
@@ -65,7 +65,7 @@ const EmptyState = ({ onNewFeedback }) => (
       <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-xl text-center">
         <Sparkles className="w-8 h-8 text-indigo-600 mx-auto mb-3" />
         <h4 className="font-semibold text-indigo-900">Improve Together</h4>
-        <p className="text-sm text-indigo-700 mt-2">Your feedback shapes our service</p>
+        <p className="text-sm text-indigo-700 mt-2">Your feedback shapes our course</p>
       </div>
     </div>
     <button
@@ -75,15 +75,15 @@ const EmptyState = ({ onNewFeedback }) => (
         shadow-lg hover:shadow-xl font-medium text-lg flex items-center"
     >
       <MessageCircle className="w-5 h-5 mr-2" />
-      Request a Service
+      Request a course
     </button>
   </div>
 );
 
 const FeedbackPage = () => {
-  const [services, setServices] = useState([]);
+  const [courses, setcourses] = useState([]);
   const [feedback, setFeedback] = useState({
-    service_id: '',
+    course_id: '',
     rating: '',
     comments: ''
   });
@@ -99,7 +99,7 @@ const FeedbackPage = () => {
     2: '😕 Below Expectations - Needs Improvement',
     3: '😐 Average - Some Aspects Need Work',
     4: '😊 Good - Mostly Meets Expectations',
-    5: '😃 Excellent - Outstanding Service'
+    5: '😃 Excellent - Outstanding course'
   };
 
   const showToast = (type, message) => {
@@ -111,31 +111,37 @@ const FeedbackPage = () => {
   };
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const studentId = localStorage.getItem('userId');
-        const apiUrl = BackendPort.getApiUrl(`feedback/${studentId}`);
-        const response = await axios.get(apiUrl);
-        setServices(response.data);
-      } catch (error) {
-        console.error('Error fetching services:', error);
-        showToast('error', 'Unable to fetch services. Please try again later.');
-      }
-    };
+   const fetchcourses = async () => {
+  try {
+    const studentId = localStorage.getItem('userId');
+    const apiUrl = BackendPort.getApiUrl(`feedback/courses/student/${studentId}`);
+    const { data } = await axios.get(apiUrl);
+    setcourses(data); // array of { course_id, course_name, batch_id, ... }
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    showToast('error', 'Unable to fetch courses. Please try again later.');
+  }
+};
 
-    const fetchstudentFeedbacks = async () => {
-      try {
-        const studentId = localStorage.getItem('userId');
-        const apiUrl = BackendPort.getApiUrl(`feedback/user/${studentId}`);
-        const response = await axios.get(apiUrl);
-        setstudentFeedbacks(response.data);
-      } catch (error) {
-        console.error('Error fetching student feedbacks:', error);
-        showToast('error', 'Unable to fetch your previous feedback. Please try again later.');
-      }
-    };
 
-    fetchServices();
+   const fetchstudentFeedbacks = async () => {
+  try {
+    const studentId = localStorage.getItem('userId');
+    const apiUrl = BackendPort.getApiUrl(`feedback/user/${studentId}`);
+    const { data } = await axios.get(apiUrl);
+    setstudentFeedbacks(data);
+  } catch (error) {
+    if (error.response?.status === 404) {
+      setstudentFeedbacks([]); // no feedback yet
+    } else {
+      console.error('Error fetching student feedbacks:', error);
+      showToast('error', 'Unable to fetch your previous feedback. Please try again later.');
+    }
+  }
+};
+
+
+    fetchcourses();
     fetchstudentFeedbacks();
   }, []);
 
@@ -149,7 +155,7 @@ const FeedbackPage = () => {
 
   const handleSubmitFeedback = async (e) => {
     e.preventDefault();
-    if (!feedback.service_id || !feedback.rating || !feedback.comments) {
+    if (!feedback.course_id || !feedback.rating || !feedback.comments) {
       showToast('error', 'Please fill out all fields');
       return;
     }
@@ -157,12 +163,14 @@ const FeedbackPage = () => {
     setIsSubmitting(true);
     try {
       const apiUrl = BackendPort.getApiUrl('feedback');
-      const response = await axios.post(apiUrl, {
-        userId: localStorage.getItem('userId'),
-        ...feedback
+      await axios.post(apiUrl, {
+        userId: Number(localStorage.getItem('userId')),
+        course_id: Number(feedback.course_id),
+        rating: Number(feedback.rating),
+        comments: feedback.comments.trim(),
       });
 
-      showToast('success', response.data.message);
+      showToast('success', 'Feedback submitted successfully');
       
       // Refresh student feedbacks after successful submission
       const studentId = localStorage.getItem('userId');
@@ -171,13 +179,17 @@ const FeedbackPage = () => {
       setstudentFeedbacks(updatedFeedbacks.data);
 
       setFeedback({
-        service_id: '',
+        course_id: '',
         rating: '',
         comments: ''
       });
     } catch (error) {
-      console.error('Error submitting feedback:', error);
-      showToast('error', 'Error submitting feedback');
+      const errorMessage = error.response?.data?.message || 'Error submitting feedback';
+      if (errorMessage === 'You have already provided feedback for this course.') {
+        showToast('error', errorMessage);
+      } else {
+        showToast('error', 'Error submitting feedback');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -197,8 +209,8 @@ const FeedbackPage = () => {
     ));
   };
 
-  // If there are no services, show the empty state
-  if (services.length === 0) {
+  // If there are no courses, show the empty state
+  if (courses.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
@@ -226,53 +238,50 @@ const FeedbackPage = () => {
                 <div className="p-3 bg-white/10 rounded-xl backdrop-blur-lg">
                   <MessageCircle className="w-8 h-8" />
                 </div>
-                <h1 className="text-3xl font-bold">Service Feedback</h1>
+                <h1 className="text-3xl font-bold">course Feedback</h1>
               </div>
             </div>
           </div>
 
           <div className="p-8">
-            {/* Services Section */}
-            <section className="mb-12">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-                <FileText className="w-6 h-6 mr-3 text-blue-600" />
-                Active Services
-              </h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                {services.map((service) => (
-                  <div 
-                    key={service.id} 
-                    className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200
-                      hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-blue-900 text-lg mb-2">
-                          {service.service_type}
-                        </h3>
-                        <div className="flex items-center text-blue-700 text-sm">
-                          <Building2 className="w-4 h-4 mr-2" />
-                          Location: {service.location || 'Not specified'}
-                        </div>
-                        <div className="flex items-center text-blue-700 text-sm mt-2">
-                          <Clock className="w-4 h-4 mr-2" />
-                          Status: {service.status}
+            {/* courses Section */}
+           <section className="mb-12">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                  <FileText className="w-6 h-6 mr-3 text-blue-600" />
+                  Active courses
+                </h2>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {courses.map((c) => (
+                    <div
+                      key={`${c.batch_id}-${c.course_id}`}
+                      className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200 hover:shadow-lg transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-blue-900 text-lg mb-1">
+                            {c.course_name}
+                          </h3>
+
+                          {c.batch_name && (
+                            <div className="text-blue-700 text-sm">Batch: {c.batch_name}</div>
+                          )}
+
+                          <div className="flex items-center text-blue-700 text-sm mt-2">
+                            <Clock className="w-4 h-4 mr-2" />
+                            Status: {c.status} • Payment: {c.payment_status}
+                          </div>
+
+                          <div className="text-blue-700 text-xs mt-1">
+                            Enrolled: {new Date(c.enrolled_at).toLocaleString()}
+                          </div>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium
-                        ${service.priority === 'High' 
-                          ? 'bg-red-100 text-red-800' 
-                          : service.priority === 'Medium'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
-                        }`}>
-                        {service.priority}
-                      </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </section>
+            {/* Feedback Form Section */}
 
             {/* Feedback Form */}
             <section className="mb-12">
@@ -283,25 +292,27 @@ const FeedbackPage = () => {
               <form onSubmit={handleSubmitFeedback} className="space-y-6">
                 <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                   <div className="space-y-6">
-                    {/* Service Selection */}
+                    {/* course Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Service
+                        Select course
                       </label>
-                      <select
-                        name="service_id"
-                        value={feedback.service_id}
-                        onChange={handleFeedbackChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 
-                          focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
-                      >
-                        <option value="">Choose a Service</option>
-                        {services.map((service) => (
-                          <option key={service.id} value={service.id}>
-                            {service.service_type}
-                          </option>
-                        ))}
-                      </select>
+                    <select
+  name="course_id"
+  value={feedback.course_id}
+  onChange={handleFeedbackChange}
+  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 
+    focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
+>
+  <option value="">Choose a course</option>
+  {courses.map((c) => (
+    <option key={`${c.batch_id}-${c.course_id}`} value={c.course_id}>
+      {c.course_name} {c.batch_name ? `(${c.batch_name})` : ''} — {c.status}/{c.payment_status}
+    </option>
+  ))}
+</select>
+
+
                     </div>
 
                     {/* Rating Selection */}
@@ -410,8 +421,8 @@ const FeedbackPage = () => {
                     >
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                            {feedback.service_type}
+                         <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                            {feedback.course_name}
                           </h3>
                           <div className="flex items-center space-x-2 mb-4">
                             <Clock className="w-4 h-4 text-gray-400" />
@@ -455,7 +466,7 @@ const FeedbackPage = () => {
                     No Feedback History
                   </h3>
                   <p className="text-purple-700 mb-4 max-w-md mx-auto">
-                    You haven't provided any feedback yet. Your insights help us improve our services!
+                    You haven't provided any feedback yet. Your insights help us improve our courses!
                   </p>
                   <div className="inline-flex items-center justify-center space-x-2 text-sm text-purple-600">
                     <Sparkles className="w-4 h-4" />

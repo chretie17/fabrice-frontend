@@ -397,20 +397,7 @@ const AdminContentManagement = () => {
                         </Typography>
                       )}
 
-                      <div className="flex justify-end mt-4 space-x-2">
-                        {!post.is_hidden && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="primary"
-                            startIcon={<Edit />}
-                            onClick={() => handleOpenPostEditor(post)}
-                            sx={{ borderRadius: '1rem' }}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                      </div>
+                      
                     </div>
                   </Paper>
                 ))}

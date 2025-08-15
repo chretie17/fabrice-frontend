@@ -59,8 +59,9 @@ const AdminFeedbackPage = () => {
     }
 
     try {
-      const apiUrl = BackendPort.getApiUrl(`feedback/response/${feedbackId}`);
-      await axios.post(apiUrl, { response });
+      const apiUrl = BackendPort.getApiUrl(`feedback/${feedbackId}/respond`);
+      await axios.put(apiUrl, { response });
+
       
       setFeedbacks(prevFeedbacks =>
         prevFeedbacks.map(feedback =>
@@ -131,7 +132,7 @@ const AdminFeedbackPage = () => {
       offsetX: 0
     },
     xaxis: {
-      categories: filteredFeedbacks.map(item => item.service_type),
+      categories: filteredFeedbacks.map(item => item.course_name),
       labels: {
         style: {
           colors: '#333',
@@ -164,7 +165,7 @@ const AdminFeedbackPage = () => {
       }
     },
     title: {
-      text: 'Service Ratings Overview',
+      text: 'course Ratings Overview',
       align: 'center',
       style: {
         fontSize: '18px',
@@ -274,7 +275,7 @@ const AdminFeedbackPage = () => {
                           <div className="flex items-center gap-2">
                             <User size={18} className="text-gray-400" />
                             <span className="font-medium text-gray-700">
-                              {feedback.tenant_name || 'Anonymous'}
+                              {feedback.student_name || 'Anonymous'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -287,7 +288,7 @@ const AdminFeedbackPage = () => {
 
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-600">
-                            {feedback.service_type}
+                            {feedback.course_name}
                           </span>
                           <div className="flex">
                             {renderStars(feedback.rating)}

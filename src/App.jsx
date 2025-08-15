@@ -8,13 +8,12 @@ import Login from './pages/Login';
 import StudentSignup from './pages/SIgnup';
 import Dashboard from './pages/Dashboard';
 import ManagerServices from './pages/ManagerServices';
-import TenantServices from './pages/TenantService';
 import Discussions from './pages/Forum/CommunityPost.jsx';
-import TenantsFeedback from './pages/TenantsFeedback';
+import TenantsFeedback from './pages/studentFeedback.jsx';
 import AdminFeedbackPage from './pages/AdminFeedbacks';
 import CourseAccess from './pages/studentpages/courseaccess';
 import AdminPage from './pages/AdminSurveys';
-import TenantPage from './pages/TenantSurvey';
+import TenantPage from './pages/Surveys.jsx';
 import AdminEngage from './pages/Forum/CommunityPost.jsx'
 import QuestionManagement from './pages/AdminQuestions';
 import AdminSurveyResponses from './pages/AdminResponse';
@@ -110,7 +109,7 @@ const App = () => {
                     <Navbar
                         links={[
                             { path: '/', label: 'Home' },
-                            { path: '/student-study', label: 'Enrollemnt' },
+                            { path: '/student-study', label: 'Enrollment' },
                             { path: '/discussions', label: 'Discussions' },
                             { path: '/feedback', label: 'Feedback' },
                             { path: '/surveys', label: 'Surveys' },
