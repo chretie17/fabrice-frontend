@@ -55,11 +55,12 @@ const Sidebar = ({ onLogout }) => {
                 ]
             },
             {
-                group: 'Service Administration',
+                group: 'Administration',
                 icon: Layers,
                 links: [
                     { path: '/admin/services', label: 'Service Management', icon: Layers },
                     { path: '/admin/discussions', label: 'Discussion Approval', icon: MessageSquare },
+                    { path: '/admin/courses', label: 'Courses Management', icon: AlignLeft },
                     { path: '/admin/engage', label: 'Discussion Engaging', icon: FileQuestion },
                     { path: '/admin/surveys', label: 'Survey Dashboard', icon: Clipboard },
                 ]

@@ -4,7 +4,7 @@ import BackendPort from '../api';
 import { Wrench, CheckCircle2, ChevronDown, Calendar, Building2, DoorClosed, AlertCircle, Plus } from 'lucide-react';
 import { Snackbar, Alert } from '@mui/material';
 
-const TenantServices = () => {
+const studentServices = () => {
     const [services, setServices] = useState([]);
     const [formData, setFormData] = useState({
         service_type: '',
@@ -31,9 +31,9 @@ const TenantServices = () => {
 
     // Existing fetch, handle change, and submit functions remain the same
     const fetchServices = async () => {
-        const tenantId = localStorage.getItem('userId');
+        const studentId = localStorage.getItem('userId');
         try {
-            const response = await axios.get(BackendPort.getApiUrl(`services/tenant/${tenantId}`));
+            const response = await axios.get(BackendPort.getApiUrl(`services/student/${studentId}`));
             const updatedServices = response.data.map((service) => ({
                 ...service,
                 floors: service.floors ? service.floors.split(',') : [],
@@ -73,11 +73,11 @@ const TenantServices = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const tenantId = localStorage.getItem('userId');
+        const studentId = localStorage.getItem('userId');
         try {
             const updatedFormData = {
                 ...formData,
-                tenant_id: tenantId,
+                student_id: studentId,
             };
             await axios.post(BackendPort.getApiUrl('services'), updatedFormData);
             showSnackbar('Service request created successfully!', 'success');
@@ -447,4 +447,4 @@ const TenantServices = () => {
     );
 };
 
-export default TenantServices;
+export default studentServices;

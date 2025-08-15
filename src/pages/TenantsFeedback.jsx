@@ -87,7 +87,7 @@ const FeedbackPage = () => {
     rating: '',
     comments: ''
   });
-  const [tenantFeedbacks, setTenantFeedbacks] = useState([]);
+  const [studentFeedbacks, setstudentFeedbacks] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [toastType, setToastType] = useState('success');
@@ -113,8 +113,8 @@ const FeedbackPage = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const tenantId = localStorage.getItem('userId');
-        const apiUrl = BackendPort.getApiUrl(`feedback/${tenantId}`);
+        const studentId = localStorage.getItem('userId');
+        const apiUrl = BackendPort.getApiUrl(`feedback/${studentId}`);
         const response = await axios.get(apiUrl);
         setServices(response.data);
       } catch (error) {
@@ -123,20 +123,20 @@ const FeedbackPage = () => {
       }
     };
 
-    const fetchTenantFeedbacks = async () => {
+    const fetchstudentFeedbacks = async () => {
       try {
-        const tenantId = localStorage.getItem('userId');
-        const apiUrl = BackendPort.getApiUrl(`feedback/user/${tenantId}`);
+        const studentId = localStorage.getItem('userId');
+        const apiUrl = BackendPort.getApiUrl(`feedback/user/${studentId}`);
         const response = await axios.get(apiUrl);
-        setTenantFeedbacks(response.data);
+        setstudentFeedbacks(response.data);
       } catch (error) {
-        console.error('Error fetching tenant feedbacks:', error);
+        console.error('Error fetching student feedbacks:', error);
         showToast('error', 'Unable to fetch your previous feedback. Please try again later.');
       }
     };
 
     fetchServices();
-    fetchTenantFeedbacks();
+    fetchstudentFeedbacks();
   }, []);
 
   const handleFeedbackChange = (e) => {
@@ -164,11 +164,11 @@ const FeedbackPage = () => {
 
       showToast('success', response.data.message);
       
-      // Refresh tenant feedbacks after successful submission
-      const tenantId = localStorage.getItem('userId');
-      const fetchFeedbackUrl = BackendPort.getApiUrl(`feedback/user/${tenantId}`);
+      // Refresh student feedbacks after successful submission
+      const studentId = localStorage.getItem('userId');
+      const fetchFeedbackUrl = BackendPort.getApiUrl(`feedback/user/${studentId}`);
       const updatedFeedbacks = await axios.get(fetchFeedbackUrl);
-      setTenantFeedbacks(updatedFeedbacks.data);
+      setstudentFeedbacks(updatedFeedbacks.data);
 
       setFeedback({
         service_id: '',
@@ -400,9 +400,9 @@ const FeedbackPage = () => {
                 <MessageCircle className="w-6 h-6 mr-3 text-purple-600" />
                 Your Previous Feedbacks
               </h2>
-              {tenantFeedbacks.length > 0 ? (
+              {studentFeedbacks.length > 0 ? (
                 <div className="space-y-6">
-                  {tenantFeedbacks.map((feedback) => (
+                  {studentFeedbacks.map((feedback) => (
                     <div 
                       key={feedback.id} 
                       className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300

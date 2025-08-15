@@ -17,6 +17,7 @@ import {
   MessageSquareMore
 } from 'lucide-react';
 import Logo from '../assets/logo.png'; // Import the logo
+import { PiStudent } from 'react-icons/pi';
 
 const Navbar = ({ 
   links = [], 
@@ -36,7 +37,7 @@ const Navbar = ({
         'Profile': User,
         'Dashboard': Activity,
         'Settings': Settings,
-        'Services': BarChart2,
+        'Enrollment': PiStudent,
         'Discussions': MessageCircle,
         'Feedback': MessageSquare,
         'Surveys': PieChart,

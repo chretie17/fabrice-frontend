@@ -7,19 +7,21 @@ import Users from './pages/ManageUsers';
 import Login from './pages/Login';
 import StudentSignup from './pages/SIgnup';
 import Dashboard from './pages/Dashboard';
-import AdminServices from './pages/AdminServices';
 import ManagerServices from './pages/ManagerServices';
 import TenantServices from './pages/TenantService';
-import Discussions from './pages/DiscussionForums';
+import Discussions from './pages/Forum/CommunityPost.jsx';
 import TenantsFeedback from './pages/TenantsFeedback';
-import AdminDiscussions from './pages/AdminDiscussion';
 import AdminFeedbackPage from './pages/AdminFeedbacks';
+import CourseAccess from './pages/studentpages/courseaccess';
 import AdminPage from './pages/AdminSurveys';
 import TenantPage from './pages/TenantSurvey';
-import AdminEngage from './pages/DiscussionForums'
+import AdminEngage from './pages/Forum/CommunityPost.jsx'
 import QuestionManagement from './pages/AdminQuestions';
 import AdminSurveyResponses from './pages/AdminResponse';
 import ReportGenerator from './pages/Report';
+import StudentDashboard from './pages/StudentEnrollment';
+import AdminDashboard from './pages/AdminCourses.jsx';
+import AdminContentManagement from './pages/AdminPosts.jsx';
 
 const App = () => {
     const [userRole, setUserRole] = useState(null);
@@ -77,12 +79,12 @@ const App = () => {
                             <>
                                 <Route path="/dashboard" element={<Dashboard />} />
                                 <Route path="/users" element={<Users />} />
-                                <Route path="/admin/services" element={<AdminServices />} />
                                 <Route path="/admin/feedbacks" element={<AdminFeedbackPage />} />
                                 <Route path="/admin/questions" element={<QuestionManagement />} />
                                 <Route path="/admin/surveys" element={<AdminPage />} />
                                 <Route path="/admin/responses" element={<AdminSurveyResponses />} />
-                                <Route path="/admin/discussions" element={<AdminDiscussions />} />
+                                 <Route path="/admin/discussions" element={<AdminContentManagement />} />
+                                <Route path="/admin/courses" element={<AdminDashboard />} />
                                 <Route path="/admin/engage" element={<AdminEngage />} />
                                 <Route path="/manager/services" element={<ManagerServices />} />
                                 <Route path="/reports" element={<ReportGenerator />} />
@@ -108,7 +110,7 @@ const App = () => {
                     <Navbar
                         links={[
                             { path: '/', label: 'Home' },
-                            { path: '/services', label: 'Services' },
+                            { path: '/student-study', label: 'Enrollemnt' },
                             { path: '/discussions', label: 'Discussions' },
                             { path: '/feedback', label: 'Feedback' },
                             { path: '/surveys', label: 'Surveys' },
@@ -119,7 +121,7 @@ const App = () => {
                     <div className="pt-20 p-4 md:p-6 lg:p-8">
                         <Routes>
                             <Route path="/" element={<Home />} />
-                            <Route path="/services" element={<TenantServices />} />
+                            <Route path="/student-study" element={<StudentDashboard />} />
                             <Route path="/discussions" element={<Discussions />} />
                             <Route path="/surveys" element={<TenantPage />} />
                             <Route path="/feedback" element={<TenantsFeedback />} />
@@ -140,6 +142,9 @@ const App = () => {
                         />
                         <Route path="/signup" element={<StudentSignup />} />
                         <Route path="*" element={<Navigate to="/login" />} />
+                                                    <Route path="/course-access" element={<CourseAccess />} />
+
+
                     </Routes>
                 </div>
             )}

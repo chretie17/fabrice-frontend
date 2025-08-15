@@ -41,7 +41,7 @@ const Login = ({ setUserRole, setIsAuthenticated }) => {
         }
     } catch (error) {
         console.error(error);
-        setError('Invalid username/email or password / Blocked After 3 Failed Attempts, please contact administrator');
+        setError('Invalid username/email or password /your account will be Blocked After 3 Failed Attempts, please contact administrator');
         setIsLoading(false);
     }
 };

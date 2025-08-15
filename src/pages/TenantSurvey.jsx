@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import BackendPort from '../api';
 
-const TenantSurvey = () => {
+const studentSurvey = () => {
   const [surveys, setSurveys] = useState([]);
   const [responses, setResponses] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -17,7 +17,7 @@ const TenantSurvey = () => {
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
-        const response = await axios.get(BackendPort.getApiUrl('survey/tenant/available'));
+        const response = await axios.get(BackendPort.getApiUrl('survey/student/available'));
         setSurveys(response.data);
         // Set first survey as active by default
         if (response.data.length > 0) {
@@ -60,7 +60,7 @@ const TenantSurvey = () => {
         responses: formattedResponses,
       };
   
-      await axios.post(BackendPort.getApiUrl('survey/tenant/response'), payload);
+      await axios.post(BackendPort.getApiUrl('survey/student/response'), payload);
       
       alert('Survey submitted successfully!');
       // Reset responses after successful submission
@@ -236,4 +236,4 @@ const TenantSurvey = () => {
   );
 };
 
-export default TenantSurvey;
+export default studentSurvey;
