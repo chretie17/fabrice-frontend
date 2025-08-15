@@ -18,9 +18,10 @@ import AdminEngage from './pages/Forum/CommunityPost.jsx'
 import QuestionManagement from './pages/AdminQuestions';
 import AdminSurveyResponses from './pages/AdminResponse';
 import ReportGenerator from './pages/Report';
-import StudentDashboard from './pages/StudentEnrollment';
+import StudentDashboard from './pages/studentpages/StudentEnrollment.jsx';
 import AdminDashboard from './pages/AdminCourses.jsx';
 import AdminContentManagement from './pages/AdminPosts.jsx';
+import InstructorDashboard from './pages/InstructorPage.jsx';
 
 const App = () => {
     const [userRole, setUserRole] = useState(null);
@@ -85,8 +86,8 @@ const App = () => {
                                  <Route path="/admin/discussions" element={<AdminContentManagement />} />
                                 <Route path="/admin/courses" element={<AdminDashboard />} />
                                 <Route path="/admin/engage" element={<AdminEngage />} />
-                                <Route path="/manager/services" element={<ManagerServices />} />
                                 <Route path="/reports" element={<ReportGenerator />} />
+                                <Route path="/instructor-page" element={<InstructorDashboard />} />
                                 <Route path="*" element={<Navigate to="/dashboard" />} />
                             </>
                         ) : (

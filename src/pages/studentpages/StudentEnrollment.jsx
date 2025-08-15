@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Calendar, Clock, User, CreditCard, CheckCircle, AlertCircle, Send, X, InfoIcon } from 'lucide-react';
-import CourseAccess from './studentpages/courseaccess'; // adjust path if needed
+import CourseAccess from './courseaccess'; // adjust path if needed
 
 const CourseEnrollment = () => {
   const [availableBatches, setAvailableBatches] = useState([]);

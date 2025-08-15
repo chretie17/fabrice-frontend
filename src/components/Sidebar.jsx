@@ -9,6 +9,7 @@ import {
   Bell, Settings, Home
 } from 'lucide-react';
 import Logo from '../assets/logo.png';
+import { GiTeacher } from 'react-icons/gi';
 
 const Sidebar = ({ onLogout }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -86,7 +87,7 @@ const Sidebar = ({ onLogout }) => {
                 icon: LayoutGrid,
                 links: [
                     { path: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
-                    { path: '/manager/services', label: 'Service Management', icon: Layers },
+                    { path: '/instructor-page', label: 'Courses Management', icon: GiTeacher },
                 ]
             }
         ],

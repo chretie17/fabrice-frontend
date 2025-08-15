@@ -3,7 +3,7 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Snackbar } from '@mui/material';
-import { Download, Filter, RefreshCcw } from 'lucide-react';
+import { Calendar, Download, Filter, MessageSquare, RefreshCcw, Tag, User } from 'lucide-react';
 
 const ReportPage = () => {
   const [loading, setLoading] = useState(false);
@@ -16,46 +16,52 @@ const ReportPage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const fetchReportData = async (filterByDate = false) => {
-    setLoading(true);
-    setReportData({});
-    
-    const params = { category };
-    
-    if (filterByDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      params.end_date = end.toISOString();
-      params.type = 'date_range';
-      
-      if (startDate) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        params.start_date = start.toISOString();
-      }
-    }
+  setLoading(true);
+  setReportData({});
   
-    try {
-      const response = await axios.get('http://localhost:3000/api/reports', { params });
-      
-      if (!response.data[category] || response.data[category].length === 0) {
-        setSnackbarMessage('No data found for the selected category and date range.');
-        setSnackbarOpen(true);
-      }
-      
-      setReportData(response.data);
-      setFiltered(filterByDate);
-    } catch (error) {
-      console.error('Error fetching report:', error);
-      setSnackbarMessage('Failed to fetch report. Please try again.');
-      setSnackbarOpen(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const params = { category };
+  
+  // Only add date filtering parameters if explicitly requested
+  if (filterByDate && startDate && endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    params.end_date = end.toISOString();
+    params.type = 'date_range';
+    
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    params.start_date = start.toISOString();
+  }
+  // Don't add any type parameter when not filtering - let backend default to all data
 
-  useEffect(() => {
-    fetchReportData();
-  }, [category]);
+  try {
+    const response = await axios.get('http://localhost:3000/api/reports', { params });
+    
+    if (!response.data[category] || response.data[category].length === 0) {
+      const message = filterByDate 
+        ? 'No data found for the selected category and date range.'
+        : 'No data found for the selected category.';
+      setSnackbarMessage(message);
+      setSnackbarOpen(true);
+    }
+    
+    setReportData(response.data);
+    setFiltered(filterByDate);
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    setSnackbarMessage('Failed to fetch report. Please try again.');
+    setSnackbarOpen(true);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Also update the useEffect to ensure it loads all data on component mount
+useEffect(() => {
+  fetchReportData(false); // Explicitly pass false to load all data
+}, [category]);
+
+// Updat
 
   // Keep the existing generatePDF function unchanged
   const generatePDF = (title) => {
@@ -198,48 +204,148 @@ const ReportPage = () => {
     doc.save(filename);
   };
 
+// Replace the renderCategoryTable function with these two functions:
 
-  const renderCategoryTable = (rows) => {
-    if (!rows || rows.length === 0) return (
-      <div className="text-center text-gray-500 p-4">
-        No data available for this category
-      </div>
-    );
+const renderPostsTable = (topics) => {
+  if (!topics || topics.length === 0) return (
+    <div className="text-center text-gray-500 p-4">
+      No topics available
+    </div>
+  );
 
-    const columns = Object.keys(rows[0]);
+  return (
+    <div className="space-y-6">
+      {topics.map((topic, topicIndex) => (
+        <div key={topic.topic_id} className="bg-white border rounded-lg shadow-sm">
+          {/* Topic Header */}
+          <div className="bg-gradient-to-r from-[#13367A] to-blue-600 text-white p-4 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">{topic.topic_title}</h3>
+                <p className="text-blue-100 text-sm mt-1">{topic.topic_description}</p>
+              </div>
+              <div className="text-right text-sm">
+                <div className="flex items-center gap-2 text-blue-100">
+                  <User size={14} />
+                  <span>{topic.topic_creator}</span>
+                </div>
+                <div className="flex items-center gap-2 text-blue-100 mt-1">
+                  <Calendar size={14} />
+                  <span>{topic.topic_created_at}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Tag size={14} />
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    topic.topic_priority === 'pinned' 
+                      ? 'bg-yellow-500 text-white' 
+                      : 'bg-blue-500 text-white'
+                  }`}>
+                    {topic.topic_priority}
+                  </span>
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    topic.topic_status === 'active' 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-gray-500 text-white'
+                  }`}>
+                    {topic.topic_status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse bg-white shadow-md rounded-lg">
-          <thead>
-            <tr className="bg-[#13367A] text-white">
+          {/* Posts Section */}
+          <div className="p-4">
+            {topic.posts && topic.posts.length > 0 ? (
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                  <MessageSquare size={16} />
+                  Posts ({topic.posts.length})
+                </h4>
+                {topic.posts.map((post, postIndex) => (
+                  <div key={post.post_id} className="border-l-4 border-blue-200 bg-gray-50 p-3 rounded-r">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <User size={14} />
+                        <span className="font-medium">{post.post_author}</span>
+                        <span>•</span>
+                        <span>{post.post_created_at}</span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          post.post_visibility === 'visible' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {post.post_visibility}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-gray-800">
+                      {post.post_content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-8 border-2 border-dashed border-gray-200 rounded">
+                <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
+                <p>No posts in this topic yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const renderCategoryTable = (rows) => {
+  if (!rows || rows.length === 0) return (
+    <div className="text-center text-gray-500 p-4">
+      No data available for this category
+    </div>
+  );
+
+  // Special handling for posts category (nested structure)
+  if (category === 'posts') {
+    return renderPostsTable(rows);
+  }
+
+  // Regular table for other categories
+  const columns = Object.keys(rows[0]);
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse bg-white shadow-md rounded-lg">
+        <thead>
+          <tr className="bg-[#13367A] text-white">
+            {columns.map((col) => (
+              <th key={col} className="px-4 py-3 text-left text-sm font-semibold">{col}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr 
+              key={index} 
+              className={`border-b hover:bg-blue-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+            >
               {columns.map((col) => (
-                <th key={col} className="px-4 py-3 text-left text-sm font-semibold">{col}</th>
+                <td key={col} className="px-4 py-2 text-sm">
+                  {typeof row[col] === 'object' ? (
+                    <pre className="text-xs">{JSON.stringify(row[col], null, 2)}</pre>
+                  ) : (
+                    row[col]
+                  )}
+                </td>
               ))}
             </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => (
-              <tr 
-                key={index} 
-                className={`border-b hover:bg-blue-50 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-              >
-                {columns.map((col) => (
-                  <td key={col} className="px-4 py-2 text-sm">
-                    {typeof row[col] === 'object' ? (
-                      <pre className="text-xs">{JSON.stringify(row[col], null, 2)}</pre>
-                    ) : (
-                      row[col]
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 
   return (
     <div className="max-w-6xl mx-auto p-4 bg-gray-100 min-h-screen">
@@ -262,7 +368,6 @@ const ReportPage = () => {
                 <option value="services">Services</option>
                 <option value="feedback">Feedback</option>
                 <option value="posts">Posts</option>
-                <option value="comments">Comments</option>
               </select>
             </div>
             
