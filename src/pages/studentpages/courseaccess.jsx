@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Calendar, Clock, User, CreditCard, CheckCircle, AlertCircle, Send, X, InfoIcon, ArrowLeft, PlayCircle, FileText, ChevronRight, ChevronDown, Video, Book, PenTool, Award, Download, Upload, Eye, Star, MessageCircle, Users, Timer,TrendingUp, BarChart3, Target } from 'lucide-react';
+import StudentSubmissionViewer from './studentsubmissionviewer';
 
 // Course Access Component (refined and enhanced)
 const CourseAccess = ({ onBack }) => {
@@ -9,6 +10,7 @@ const CourseAccess = ({ onBack }) => {
   const [studentProgress, setStudentProgress] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [studentGrades, setStudentGrades] = useState([]);
+  const [assignmentFiles, setAssignmentFiles] = useState({});
 const [gradesLoading, setGradesLoading] = useState(false);
   const [assignmentSubmissions, setAssignmentSubmissions] = useState({});
   const [loading, setLoading] = useState(true);
@@ -110,29 +112,29 @@ const fetchCourseContent = async (courseId, batchId) => {
     setStudentProgress(progressData);
     setAssignments(courseData.assignments || []);
     
-    // Fetch assignment submissions
-    if (courseData.assignments && courseData.assignments.length > 0) {
-      const submissionsPromises = courseData.assignments.map(async (assignment) => {
-        try {
-          const submissionResponse = await fetch(`http://localhost:3000/api/courses/assignments/${assignment.id}/student/${userId}`);
-          if (submissionResponse.ok) {
-            const submissionData = await submissionResponse.json();
-            return { assignmentId: assignment.id, submission: submissionData };
-          }
-          return { assignmentId: assignment.id, submission: null };
-        } catch (error) {
-          console.error(`Error fetching submission for assignment ${assignment.id}:`, error);
-          return { assignmentId: assignment.id, submission: null };
-        }
-      });
-
-      const submissions = await Promise.all(submissionsPromises);
-      const submissionsMap = {};
-      submissions.forEach(({ assignmentId, submission }) => {
-        submissionsMap[assignmentId] = submission;
-      });
-      setAssignmentSubmissions(submissionsMap);
+    // Fetch assignment submission// In fetchCourseContent function, replace the assignment submissions fetch with:
+if (courseData.assignments && courseData.assignments.length > 0) {
+  const submissionsPromises = courseData.assignments.map(async (assignment) => {
+    try {
+      const submissionResponse = await fetch(`http://localhost:3000/api/files/student/${userId}/assignment/${assignment.id}`);
+      if (submissionResponse.ok) {
+        const submissionData = await submissionResponse.json();
+        return { assignmentId: assignment.id, submission: submissionData };
+      }
+      return { assignmentId: assignment.id, submission: null };
+    } catch (error) {
+      console.error(`Error fetching submission for assignment ${assignment.id}:`, error);
+      return { assignmentId: assignment.id, submission: null };
     }
+  });
+
+  const submissions = await Promise.all(submissionsPromises);
+  const submissionsMap = {};
+  submissions.forEach(({ assignmentId, submission }) => {
+    submissionsMap[assignmentId] = submission;
+  });
+  setAssignmentSubmissions(submissionsMap);
+}
     
   } catch (error) {
     console.error('Error fetching course content:', error);
@@ -147,15 +149,15 @@ const handleCourseSelect = (course) => {
   setSelectedCourse(course);
   setActiveTab('lessons');
   
-  const courseId = course.course_id || course.id;
+  const courseId = course.course_id;
   
   if (!courseId) {
-    console.error('No valid course ID found in course object:', course);
+    console.error('No course_id found in course object. Please ensure your API returns course_id:', course);
     return;
   }
   
   fetchCourseContent(courseId, course.batch_id);
-  fetchStudentGrades(courseId); // Add this line
+  fetchStudentGrades(courseId);
 };
 
 // Helper function to get grade color
@@ -190,42 +192,60 @@ const getGradeColor = (score, maxPoints) => {
     }
   };
 
-  const submitAssignment = async (assignmentId) => {
-    const submissionText = assignmentSubmission[assignmentId];
-    if (!submissionText || !submissionText.trim()) {
-      alert('Please enter your assignment submission');
-      return;
+const submitAssignmentWithFile = async (assignmentId) => {
+  const submissionText = assignmentSubmission[assignmentId];
+  const file = assignmentFiles[assignmentId];
+  
+  if (!submissionText || !submissionText.trim()) {
+    alert('Please enter your assignment submission text');
+    return;
+  }
+
+  try {
+    setSubmittingAssignment(assignmentId);
+    
+    const formData = new FormData();
+    formData.append('student_id', userId);
+    formData.append('assignment_id', assignmentId);
+    formData.append('submission_text', submissionText);
+    
+    if (file) {
+      formData.append('file', file);
     }
 
-    try {
-      setSubmittingAssignment(assignmentId);
+    const response = await fetch('http://localhost:3000/api/files/submit', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert('Assignment submitted successfully!');
+      setAssignmentSubmission(prev => ({
+        ...prev,
+        [assignmentId]: ''
+      }));
+      setAssignmentFiles(prev => ({
+        ...prev,
+        [assignmentId]: null
+      }));
+      // Clear file input
+      const fileInput = document.querySelector(`input[data-assignment-id="${assignmentId}"]`);
+      if (fileInput) fileInput.value = '';
       
-      const response = await fetch('http://localhost:3000/api/courses/assignments/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_id: userId,
-          assignment_id: assignmentId,
-          submission_text: submissionText
-        })
-      });
-
-      if (response.ok) {
-        alert('Assignment submitted successfully!');
-        setAssignmentSubmission(prev => ({
-          ...prev,
-          [assignmentId]: ''
-        }));
-        // Refresh assignments to show submission status
-        fetchCourseContent(selectedCourse.course_id, selectedCourse.batch_id);
-      }
-    } catch (error) {
-      console.error('Error submitting assignment:', error);
-      alert('Failed to submit assignment');
-    } finally {
-      setSubmittingAssignment(null);
+      // Refresh assignments
+      fetchCourseContent(selectedCourse.course_id, selectedCourse.batch_id);
+    } else {
+      alert(result.error || 'Failed to submit assignment');
     }
-  };
+  } catch (error) {
+    console.error('Error submitting assignment:', error);
+    alert('Failed to submit assignment');
+  } finally {
+    setSubmittingAssignment(null);
+  }
+};
 
   const toggleLessonExpansion = (lessonId) => {
     setExpandedLessons(prev => ({
@@ -583,97 +603,124 @@ const getGradeColor = (score, maxPoints) => {
                     )}
 
                     {/* Assignments Tab */}
-                    {activeTab === 'assignments' && (
-                      <div className="space-y-6">
-                        {assignments.length > 0 ? (
-                          assignments.map((assignment) => {
-                            const assignmentStatus = getAssignmentStatus(assignment.id);
-                            const existingSubmission = assignmentSubmissions[assignment.id];
-                            
-                            return (
-                              <div key={assignment.id} className="border rounded-lg overflow-hidden">
-                                <div className="bg-gray-50 p-4 border-b">
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                      <h4 className="font-semibold text-gray-900 text-lg">{assignment.title}</h4>
-                                      <p className="text-gray-600 mt-2">{assignment.description}</p>
-                                    </div>
-                                    <div className="text-right ml-4">
-                                      <div className={`text-sm font-medium ${assignmentStatus.color}`}>
-                                        {assignmentStatus.text}
-                                      </div>
-                                      <div className="text-sm text-gray-600 mt-1">
-                                        Max Points: {assignment.max_points}
-                                      </div>
-                                      {assignment.due_date && (
-                                        <div className="text-sm text-gray-600">
-                                          Due: {new Date(assignment.due_date).toLocaleDateString()}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
+                   {/* Assignments Tab */}
+{activeTab === 'assignments' && (
+  <div className="space-y-6">
+    {assignments.length > 0 ? (
+      assignments.map((assignment) => {
+        const assignmentStatus = getAssignmentStatus(assignment.id);
+        const existingSubmission = assignmentSubmissions[assignment.id];
+        
+        return (
+          <div key={assignment.id} className="border rounded-lg overflow-hidden">
+            <div className="bg-gray-50 p-4 border-b">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 text-lg">{assignment.title}</h4>
+                  <p className="text-gray-600 mt-2">{assignment.description}</p>
+                </div>
+                <div className="text-right ml-4">
+                  <div className={`text-sm font-medium ${assignmentStatus.color}`}>
+                    {assignmentStatus.text}
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Max Points: {assignment.max_points}
+                  </div>
+                  {assignment.due_date && (
+                    <div className="text-sm text-gray-600">
+                      Due: {new Date(assignment.due_date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
-                                <div className="p-4">
-                                  {/* Show existing submission */}
-                                  {existingSubmission && (
-                                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                      <h5 className="font-medium text-blue-900 mb-2 flex items-center">
-                                        <Eye className="w-4 h-4 mr-2" />
-                                        Your Submission
-                                      </h5>
-                                      <p className="text-blue-800 text-sm mb-2">{existingSubmission.submission_text}</p>
-                                      <div className="text-xs text-blue-600">
-                                        Submitted on: {new Date(existingSubmission.submitted_date).toLocaleDateString()}
-                                      </div>
-                                      {existingSubmission.score && (
-                                        <div className="mt-2 p-2 bg-green-100 border border-green-200 rounded">
-                                          <div className="font-medium text-green-800">
-                                            Grade: {existingSubmission.score}/{assignment.max_points}
-                                          </div>
-                                          {existingSubmission.feedback && (
-                                            <div className="text-green-700 text-sm mt-1">
-                                              Feedback: {existingSubmission.feedback}
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
+            <div className="p-4 space-y-4">
+              {/* Use the StudentSubmissionViewer component */}
+            {existingSubmission && (
+  <StudentSubmissionViewer 
+    submission={existingSubmission}
+    assignment={assignment}
+    className="mb-4"
+  />
+)}
 
                                   {/* Submission form */}
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      {existingSubmission ? 'Update Your Submission' : 'Your Submission'}
-                                    </label>
-                                    <textarea
-                                      value={assignmentSubmission[assignment.id] || ''}
-                                      onChange={(e) => setAssignmentSubmission(prev => ({
-                                        ...prev,
-                                        [assignment.id]: e.target.value
-                                      }))}
-                                      rows={6}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
-                                      placeholder="Enter your assignment submission here..."
-                                    />
-                                    <button
-                                      onClick={() => submitAssignment(assignment.id)}
-                                      disabled={submittingAssignment === assignment.id || !assignmentSubmission[assignment.id]?.trim()}
-                                      className="mt-3 flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                      {submittingAssignment === assignment.id ? (
-                                        <>
-                                          <Clock className="w-4 h-4 mr-2 animate-spin" />
-                                          {existingSubmission ? 'Updating...' : 'Submitting...'}
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Send className="w-4 h-4 mr-2" />
-                                          {existingSubmission ? 'Update Submission' : 'Submit Assignment'}
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
+                                {/* Submission form */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    {existingSubmission ? 'Update Your Submission' : 'Your Submission'}
+  </label>
+  <textarea
+    value={assignmentSubmission[assignment.id] || ''}
+    onChange={(e) => setAssignmentSubmission(prev => ({
+      ...prev,
+      [assignment.id]: e.target.value
+    }))}
+    rows={6}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+    placeholder="Enter your assignment submission here..."
+  />
+  
+  {/* File Upload */}
+  <div className="mt-4">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      <Upload className="w-4 h-4 inline mr-1" />
+      Attach File (Optional)
+    </label>
+    <input
+      type="file"
+      data-assignment-id={assignment.id}
+      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.zip"
+      onChange={(e) => setAssignmentFiles(prev => ({
+        ...prev,
+        [assignment.id]: e.target.files[0]
+      }))}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+    {assignmentFiles[assignment.id] && (
+      <div className="mt-1 text-sm text-green-600">
+        Selected: {assignmentFiles[assignment.id].name}
+      </div>
+    )}
+    <p className="text-xs text-gray-500 mt-1">
+      Supported: PDF, DOC, DOCX, TXT, Images, ZIP (Max 10MB)
+    </p>
+  </div>
+
+  {/* Show existing file if any */}
+  {existingSubmission && (
+    <div className="mb-2 mt-2">
+      <div className="text-xs text-blue-600">
+        Submitted on: {new Date(existingSubmission.submitted_date).toLocaleDateString()}
+      </div>
+      {existingSubmission.file_original_name && (
+        <div className="text-sm text-green-600 flex items-center">
+          <FileText className="w-4 h-4 mr-1" />
+          Current file: {existingSubmission.file_original_name}
+        </div>
+      )}
+    </div>
+  )}
+
+  <button
+    onClick={() => submitAssignmentWithFile(assignment.id)}
+    disabled={submittingAssignment === assignment.id || (!assignmentSubmission[assignment.id]?.trim())}
+    className="mt-3 flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+  >
+    {submittingAssignment === assignment.id ? (
+      <>
+        <Clock className="w-4 h-4 mr-2 animate-spin" />
+        {existingSubmission ? 'Updating...' : 'Submitting...'}
+      </>
+    ) : (
+      <>
+        <Send className="w-4 h-4 mr-2" />
+        {existingSubmission ? 'Update Submission' : 'Submit Assignment'}
+      </>
+    )}
+  </button>
+</div>
                                 </div>
                               </div>
                             );
@@ -912,135 +959,31 @@ const getGradeColor = (score, maxPoints) => {
                     {/* Grades Tab */}
 {activeTab === 'grades' && (
   <div className="space-y-6">
-    {/* Overall Summary */}
-    {studentGrades.length > 0 && (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-4">Grade Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {studentGrades.filter(g => g.score !== null).length}
-            </div>
-            <div className="text-blue-700 text-sm">Graded Assignments</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {studentGrades.filter(g => g.score && g.max_points && (g.score / g.max_points) >= 0.9).length}
-            </div>
-            <div className="text-blue-700 text-sm">A Grades (90%+)</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-600">
-              {studentGrades.reduce((sum, g) => sum + (g.score || 0), 0)} / {studentGrades.reduce((sum, g) => sum + (g.max_points || 0), 0)}
-            </div>
-            <div className="text-blue-700 text-sm">Total Points</div>
-          </div>
-        </div>
+    {studentGrades.map((grade) => (
+      <div key={grade.id} className="bg-white border rounded-lg p-6 shadow-sm">
+        <h4 className="font-semibold text-gray-900 text-lg mb-4">
+          {grade.assignment_title}
+        </h4>
+        
+        {/* Use the component to show the submission with grade */}
+        <StudentSubmissionViewer 
+          submission={{
+            ...grade,
+            submitted_date: grade.submitted_date,
+            graded_date: grade.graded_date,
+            score: grade.score,
+            feedback: grade.feedback,
+            submission_text: grade.submission_text,
+            file_original_name: grade.file_original_name,
+            file_path: grade.file_path
+          }}
+          assignment={{ max_points: grade.max_points }}
+        />
       </div>
-    )}
-
-    {/* Grades List */}
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Assignment Grades</h3>
-      
-      {studentGrades.length > 0 ? (
-        <div className="space-y-4">
-          {studentGrades.map((grade) => (
-            <div key={grade.id} className="bg-white border rounded-lg p-6 shadow-sm">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 text-lg mb-2">
-                    {grade.assignment_title}
-                  </h4>
-                  
-                  {/* Score Display */}
-                  {grade.score !== null ? (
-                    <div className="mb-4">
-                      <div className="flex items-center space-x-4 mb-2">
-                        <div className="text-2xl font-bold text-gray-900">
-                          {grade.score} / {grade.max_points}
-                        </div>
-                        <div className={`text-xl font-semibold ${getGradeColor(grade.score, grade.max_points)}`}>
-                          {Math.round((grade.score / grade.max_points) * 100)}%
-                        </div>
-                      </div>
-                      
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                        <div 
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            (grade.score / grade.max_points) >= 0.9 ? 'bg-green-500' :
-                            (grade.score / grade.max_points) >= 0.8 ? 'bg-blue-500' :
-                            (grade.score / grade.max_points) >= 0.7 ? 'bg-yellow-500' :
-                            (grade.score / grade.max_points) >= 0.6 ? 'bg-orange-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${(grade.score / grade.max_points) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mb-4">
-                      <div className="text-gray-500 font-medium">Not Yet Graded</div>
-                      <div className="text-sm text-gray-400">Score will appear here when graded</div>
-                    </div>
-                  )}
-
-                  {/* Feedback */}
-                  {grade.feedback && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                      <h5 className="font-medium text-gray-900 mb-2 flex items-center">
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Instructor Feedback
-                      </h5>
-                      <p className="text-gray-700">{grade.feedback}</p>
-                    </div>
-                  )}
-
-                  {/* Dates */}
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                    {grade.submitted_date && (
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Submitted: {new Date(grade.submitted_date).toLocaleDateString()}
-                      </div>
-                    )}
-                    {grade.graded_date && (
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Graded: {new Date(grade.graded_date).toLocaleDateString()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Grade Status Badge */}
-                <div className="ml-4">
-                  {grade.score !== null ? (
-                    <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                      Graded
-                    </div>
-                  ) : (
-                    <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                      Pending
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Grades Yet</h3>
-          <p className="text-gray-600">Your assignment grades will appear here once they are graded by your instructor.</p>
-        </div>
-      )}
-    </div>
+    ))}
   </div>
 )}
-                  </div>
-                </div>
+</div>                </div>
               </div>
             )}
           </div>

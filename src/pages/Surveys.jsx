@@ -78,7 +78,7 @@ const studentSurvey = () => {
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
         <div className="bg-blue-600 text-white p-6 flex items-center">
           <FileText className="w-10 h-10 mr-4" />
-          <h1 className="text-3xl font-bold">Service Request Surveys</h1>
+          <h1 className="text-3xl font-bold">Surveys</h1>
         </div>
 
         {surveys.length > 0 ? (

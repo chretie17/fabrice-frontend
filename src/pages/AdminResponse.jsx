@@ -113,7 +113,7 @@ const AdminSurveyResponses = () => {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                 <FileSpreadsheet size={24} />
-                Service Request Surveys
+                Surveys
               </h1>
               <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
                 {surveysWithResponses.length} Survey{surveysWithResponses.length !== 1 ? 's' : ''}

@@ -66,7 +66,7 @@ const Login = ({ setUserRole, setIsAuthenticated }) => {
             className="w-full max-w-md"
           >
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-[#13377C]">Welcome Back</h1>
+              <h1 className="text-3xl font-bold text-[#13377C]">Welcome Back to LUZ</h1>
               <p className="text-gray-600 mt-2">Please enter your details</p>
             </div>
 

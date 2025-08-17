@@ -7,7 +7,6 @@ import Users from './pages/ManageUsers';
 import Login from './pages/Login';
 import StudentSignup from './pages/SIgnup';
 import Dashboard from './pages/Dashboard';
-import ManagerServices from './pages/ManagerServices';
 import Discussions from './pages/Forum/CommunityPost.jsx';
 import TenantsFeedback from './pages/studentFeedback.jsx';
 import AdminFeedbackPage from './pages/AdminFeedbacks';
@@ -21,7 +20,7 @@ import ReportGenerator from './pages/Report';
 import StudentDashboard from './pages/studentpages/StudentEnrollment.jsx';
 import AdminDashboard from './pages/AdminCourses.jsx';
 import AdminContentManagement from './pages/AdminPosts.jsx';
-import InstructorDashboard from './pages/InstructorPage.jsx';
+import InstructorDashboard from './pages/instructor/InstructorPage.jsx';
 
 const App = () => {
     const [userRole, setUserRole] = useState(null);

@@ -326,19 +326,21 @@ const CourseEnrollment = () => {
               </ol>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                MoMo Payment Confirmation Message <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={paymentProof}
-                onChange={(e) => setPaymentProof(e.target.value)}
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow placeholder:text-gray-400"
-                placeholder="Paste your complete MoMo confirmation message here..."
-                required
-              />
-            </div>
+           <div className="mb-6">
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    MoMo Payment Confirmation Message <span className="text-red-500">*</span>
+  </label>
+  <textarea
+    value={paymentProof}
+    onChange={(e) => setPaymentProof(e.target.value)}
+    rows={6}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow placeholder:text-gray-400"
+    placeholder="Paste your complete MoMo confirmation message here..."
+    required
+    autoFocus
+    onFocus={(e) => e.target.setSelectionRange(e.target.value.length, e.target.value.length)}
+  />
+</div>
 
             <div className="flex space-x-4">
               <button
@@ -443,17 +445,18 @@ const CourseEnrollment = () => {
             {myEnrollments.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myEnrollments.map((enrollment) => (
-                  <BatchCard 
-                    key={enrollment.id} 
-                    batch={{
-                      ...enrollment,
-                      course_name: enrollment.course_name,
-                      name: enrollment.batch_name
-                    }}
-                    isEnrolled={true}
-                    enrollmentInfo={enrollment}
-                  />
-                ))}
+                <BatchCard 
+                  key={enrollment.id} 
+                  batch={{
+                    ...enrollment,
+                    course_name: enrollment.course_name,
+                    name: enrollment.batch_name,
+                    instructor_name: enrollment.instructor_name
+                  }}
+                  isEnrolled={true}
+                  enrollmentInfo={enrollment}
+                />
+              ))}
               </div>
             ) : (
               <div className="text-center py-12">

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 
 // Import the CourseManagement component - make sure the path is correct
+import AttendanceComponent from './AttendanceComponent';
 import CourseManagement from './InstructorCourses'; // Fixed import path
 
 const InstructorDashboard = () => {
@@ -156,17 +157,18 @@ const InstructorDashboard = () => {
     }
   };
 
-  const handleBatchSelect = (batch) => {
-    setSelectedBatch(batch);
-    fetchBatchStudents(batch.id);
-    fetchAttendance(batch.id, selectedDate);
-    
-    // Find course for this batch and fetch assignments
-    const course = courses.find(c => c.name === batch.course_name);
-    if (course) {
-      fetchAssignments(course.id);
-    }
-  };
+const handleBatchSelect = (batch) => {
+  setSelectedBatch(batch);
+  fetchBatchStudents(batch.id);
+  fetchAttendance(batch.id, selectedDate);
+  
+  // Find course for this batch and fetch assignments
+  const course = courses.find(c => c.name === batch.course_name);
+  if (course) {
+    fetchAssignments(course.id);
+  }
+};
+
 
   const filteredStudents = students.filter(student => 
     student.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -275,125 +277,17 @@ const InstructorDashboard = () => {
     </div>
   );
 
-  const AttendanceTab = () => {
-    const [attendanceRecords, setAttendanceRecords] = useState([]);
-    const attendanceStats = getAttendanceStats();
-
-    useEffect(() => {
-      if (selectedBatch && students.length > 0) {
-        const records = students.map(student => {
-          const existing = attendanceData.find(a => a.student_id === student.student_id);
-          return {
-            student_id: student.student_id,
-            student_name: student.student_name,
-            status: existing?.status || 'present'
-          };
-        });
-        setAttendanceRecords(records);
-      }
-    }, [selectedBatch, students, attendanceData]);
-
-    const updateAttendanceStatus = (studentId, status) => {
-      setAttendanceRecords(prev => prev.map(record => 
-        record.student_id === studentId ? { ...record, status } : record
-      ));
-    };
-
-    const handleMarkAttendance = () => {
-      markAttendance(attendanceRecords);
-    };
-
-    if (!selectedBatch) {
-      return (
-        <div className="text-center py-8">
-          <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Please select a batch to mark attendance</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-6">
-        {/* Batch and Date Selection */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Attendance for {selectedBatch.name}</h3>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                fetchAttendance(selectedBatch.id, e.target.value);
-              }}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            />
-          </div>
-
-          {/* Attendance Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">{attendanceStats.present}</p>
-              <p className="text-sm text-green-700">Present</p>
-            </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg">
-              <p className="text-2xl font-bold text-red-600">{attendanceStats.absent}</p>
-              <p className="text-sm text-red-700">Absent</p>
-            </div>
-            <div className="text-center p-3 bg-yellow-50 rounded-lg">
-              <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late}</p>
-              <p className="text-sm text-yellow-700">Late</p>
-            </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <p className="text-2xl font-bold text-blue-600">{attendanceStats.total}</p>
-              <p className="text-sm text-blue-700">Total</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Attendance List */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-medium">Mark Attendance</h4>
-            <button
-              onClick={handleMarkAttendance}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
-            >
-              <CheckCircle className="h-4 w-4" />
-              <span>Save Attendance</span>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {attendanceRecords.map((record) => (
-              <div key={record.student_id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">{record.student_name}</p>
-                </div>
-                <div className="flex space-x-2">
-                  {['present', 'absent', 'late'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => updateAttendanceStatus(record.student_id, status)}
-                      className={`px-3 py-1 rounded-full text-sm capitalize ${
-                        record.status === status
-                          ? status === 'present' ? 'bg-green-100 text-green-800' :
-                            status === 'absent' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
+const AttendanceTab = () => {
+  return (
+    <AttendanceComponent
+      selectedBatch={selectedBatch}
+      students={students}
+      attendanceData={attendanceData}
+      onRefreshAttendance={fetchAttendance}
+      userId={userId}
+    />
+  );
+};
 
   const StudentsTab = () => (
     <div className="space-y-6">
